@@ -124,6 +124,11 @@ Semantic versioning, синхронное с версией системы.
 
 | Документ | Назначение |
 |---|---|
+| [docs/LLM-CONTEXT.md](docs/LLM-CONTEXT.md) | Контекст для ИИ-агента — читать первым |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архитектура, аудит, hash chain |
+| [docs/DATA-MODEL.md](docs/DATA-MODEL.md) | Поля, 8 блоков, справочники, формат ID |
+| [docs/TESTING.md](docs/TESTING.md) | Гейт ci:local, грабли e2e |
+| [docs/DEPLOY-PROD.md](docs/DEPLOY-PROD.md) | Установка на VPS (Docker, nginx, бэкапы) |
 | [docs/INITIAL-CONTEXT.md](docs/INITIAL-CONTEXT.md) | Первичный контекст v0.2.0 |
 | [docs/architecture/c4.md](docs/architecture/c4.md) | C4-модель |
 | [docs/architecture/context.md](docs/architecture/context.md) | Потоки данных |

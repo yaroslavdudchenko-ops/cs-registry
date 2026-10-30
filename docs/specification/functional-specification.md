@@ -1,8 +1,8 @@
 ---
 title: Функциональная спецификация CS Registry
-version: 0.8.4
+version: 0.9.0
 status: draft
-updated: 2026-10-29
+updated: 2026-10-30
 owners:
   - архитектор
   - бизнес
@@ -600,3 +600,30 @@ Logout доступен любой аутентифицированной рол
 | URS-102 | Must | 9 |
 | URS-103 | Must | 1, 2.1, 2.2, 2.3, 2.4, 2.5, 9 |
 | URS-104 | Must | 2.5, 3, 4 |
+| URS-105 | Must | 11 |
+| URS-106 | Must | 11 |
+| URS-107 | Must | 11 |
+| URS-108 | Must | 11 |
+| URS-109 | Must | 11 |
+| URS-110 | Must | 11 |
+| URS-111 | Must | 11 |
+| URS-112 | Must | 11 |
+| URS-113 | Must | 11 |
+| URS-114 | Must | 11 |
+| URS-115 | Must | 11 |
+| URS-116 | Must | 11 |
+
+## 11. Изменения 0.9.0
+
+Подробно поля и справочники — [../DATA-MODEL.md](../DATA-MODEL.md).
+
+| Раздел | Поведение | URS |
+|---|---|---|
+| 11.1 ID | `SYS-<ДОМЕН>-NNNN`, сквозной счётчик, неизменяем | URS-105, URS-106 |
+| 11.2 Карточка/форма | 8 блоков, GxP-статус первым, блокировка полей без GxP | URS-107, URS-108 |
+| 11.3 Люди и компании | `system_people` (учётка или текст), `system_companies` | URS-109, URS-110 |
+| 11.4 SCR-LIST | 9 колонок по умолчанию, выбор колонок в localStorage, фильтры domain/company/gxp_criticality/gamp_category/owner | URS-111, URS-112 |
+| 11.5 Документация | `system_documents`, http(s) и UNC, `rel=noopener noreferrer` | URS-113 |
+| 11.6 Ошибки | `fields[]` с русским сообщением, показ под полем, лог `kind=rejection` без значений | URS-114 |
+| 11.7 Поставка | транзакционные миграции, Dockerfile, docker-compose.prod.yml | URS-115, URS-116 |
+

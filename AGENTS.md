@@ -150,6 +150,9 @@ pnpm audit:verify
 
 ## 9. Где что лежит
 
+- **`docs/LLM-CONTEXT.md` — прочитай первым**: факты о проекте, неизменяемые правила, карта файлов.
+- `docs/ARCHITECTURE.md`, `docs/DATA-MODEL.md` — архитектура, поля и справочники 0.9.0.
+- `docs/TESTING.md` — гейт и грабли e2e; `docs/DEPLOY-PROD.md` — установка на VPS.
 - `docs/INITIAL-CONTEXT.md` — исходные решения и допущения проекта.
 - `docs/specification/urs.md` — пользовательские требования, URS-NNN.
 - `docs/specification/functional-specification.md` — функциональная спецификация,

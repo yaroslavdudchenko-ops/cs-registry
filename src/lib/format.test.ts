@@ -143,7 +143,7 @@ describe("formatChangedFieldsLabel", () => {
       after: { name: "Параллель А", vendor: "Citroën" },
     });
     expect(label).toContain("Наименование");
-    expect(label).toBe("Наименование, Вендор");
+    expect(label).toBe("Наименование, Подрядчик");
   });
 
   it("keeps an em dash for a rejection with null changed_fields", () => {

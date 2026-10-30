@@ -29,7 +29,7 @@ const LIST_PDF_COLUMNS: PdfColumn[] = [
   { header: "Критичность", width: 78, value: (row) => CRITICALITY_LABELS[row.criticality] },
   { header: "Жизненный цикл", width: 92, value: (row) => LIFECYCLE_LABELS[row.lifecycle_status] },
   { header: "Валидация", width: 88, value: (row) => VALIDATION_LABELS[row.validation_status] },
-  { header: "Владелец процесса", width: 118, value: (row) => row.process_owner_name },
+  { header: "Владелец процесса", width: 118, value: (row) => row.process_owner_name ?? "—" },
   { header: "Площадка", width: 90, value: (row) => row.site ?? "—" },
 ];
 

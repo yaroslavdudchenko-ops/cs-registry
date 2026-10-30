@@ -71,3 +71,76 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 export const AUDIT_ENTITY_TYPES = ["systems", "users", "auth"] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
+
+export const SYSTEM_DOMAINS = ["QC", "QA", "PROD", "RnD", "LOG", "ADM", "IT"] as const;
+export type SystemDomain = (typeof SYSTEM_DOMAINS)[number];
+
+export const GAMP_CATEGORIES = ["1", "3", "4", "5"] as const;
+export type GampCategory = (typeof GAMP_CATEGORIES)[number];
+
+export const PERSON_ROLES = [
+  "process_owner",
+  "system_owner",
+  "release_manager",
+  "key_user",
+  "support",
+  "project_manager",
+  "analyst",
+  "developer",
+  "tester",
+] as const;
+export type PersonRole = (typeof PERSON_ROLES)[number];
+
+export const COMPANY_CODES = ["BE", "BI", "PRO", "PROR", "PROD_CO", "AR"] as const;
+export type CompanyCode = (typeof COMPANY_CODES)[number];
+
+export const SERVER_TYPES = ["physical", "virtual", "cloud", "container", "other"] as const;
+export type ServerType = (typeof SERVER_TYPES)[number];
+
+export const BACKUP_FREQUENCIES = ["hourly", "daily", "weekly", "monthly", "other"] as const;
+export type BackupFrequency = (typeof BACKUP_FREQUENCIES)[number];
+
+export const DOCUMENT_KINDS = ["internal", "vendor"] as const;
+export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
+
+/** Домен по умолчанию для существующих SYS-NNNN, если тип неизвестен. */
+export function defaultDomainForSystemType(systemType: SystemType): SystemDomain {
+  switch (systemType) {
+    case "LIMS":
+    case "LES":
+    case "ELN":
+    case "LMS":
+      return "QC";
+    case "QMS":
+      return "QA";
+    case "MES":
+    case "EBR":
+    case "SCADA":
+    case "EMS":
+    case "BMS":
+    case "CMMS":
+    case "APS":
+      return "PROD";
+    case "EDC":
+    case "CTMS":
+    case "RIM":
+      return "RnD";
+    case "WMS":
+    case "TMS":
+    case "SRM":
+      return "LOG";
+    case "ERP":
+    case "CRM":
+    case "HRIS":
+    case "EHS":
+    case "PLM":
+    case "ACC":
+    case "EPM":
+    case "LEGAL":
+    case "CONTRACT":
+    case "PAYROLL":
+      return "ADM";
+    default:
+      return "IT";
+  }
+}

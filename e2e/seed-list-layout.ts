@@ -191,12 +191,13 @@ export async function seedListLayoutSystems(): Promise<number> {
     for (const row of ROWS) {
       await sql`
         INSERT INTO systems (
-          code, name, system_type, hosting_type, data_classification, is_gxp_relevant,
+          code, name, domain, system_type, hosting_type, data_classification, is_gxp_relevant,
           criticality, lifecycle_status, validation_status,
           process_owner_id, system_owner_id, site
         ) VALUES (
           ${row.code},
           ${row.name},
+          ${"IT"}::system_domain_enum,
           ${row.systemType}::system_type_enum,
           ${"on_prem"}::hosting_type_enum,
           ${"internal"}::data_class_enum,

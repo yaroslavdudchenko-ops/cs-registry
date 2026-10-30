@@ -116,15 +116,16 @@ describe("URS-095 покрытие аудита", () => {
         cookie,
         body: {
           name: nextName("sys"),
+          domain: "QC",
           system_type: "LIMS",
           hosting_type: "on_prem",
           data_classification: "internal",
           is_gxp_relevant: false,
           criticality: "low",
           lifecycle_status: "planned",
-          validation_status: "not_validated",
-          process_owner_id: editor.id,
-          system_owner_id: admin.id,
+          validation_status: "not_required",
+          system_owner: { user_id: admin.id },
+          process_owners: [{ user_id: editor.id }],
         },
       }),
     );
@@ -172,6 +173,7 @@ describe("URS-095 покрытие аудита", () => {
             cookie,
             body: {
               name: nextName("create"),
+              domain: "ADM",
               system_type: "ERP",
               hosting_type: "cloud",
               data_classification: "internal",
@@ -179,8 +181,8 @@ describe("URS-095 покрытие аудита", () => {
               criticality: "low",
               lifecycle_status: "planned",
               validation_status: "not_required",
-              process_owner_id: editor.id,
-              system_owner_id: admin.id,
+              system_owner: { user_id: admin.id },
+              process_owners: [{ user_id: editor.id }],
             },
           }),
         );

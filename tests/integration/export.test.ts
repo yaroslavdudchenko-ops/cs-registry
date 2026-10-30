@@ -122,17 +122,20 @@ describe("выгрузки XLSX и PDF", () => {
         cookie,
         body: {
           name: `${prefix}-lims`,
+          domain: "QC",
           system_type: "LIMS",
           hosting_type: "on_prem",
           data_classification: "internal",
           is_gxp_relevant: true,
           criticality: "high",
+          gxp_criticality: "high",
+          gamp_category: "5",
           lifecycle_status: "active",
           validation_status: "validated",
           validated_at: "2026-03-01",
           next_review_at: "2027-03-01",
-          process_owner_id: editor.id,
-          system_owner_id: admin.id,
+          system_owner: { user_id: admin.id },
+          process_owners: [{ user_id: editor.id }],
           site: "Москва",
         },
       }),
@@ -168,10 +171,10 @@ describe("выгрузки XLSX и PDF", () => {
       throw new Error("missing registry sheet");
     }
     const headers = headerCells(registry);
-    expect(headers[0]).toBe("Код");
+    expect(headers[0]).toBe("ID системы");
     expect(headers.at(-1)).toBe("Служебный ключ");
     expect(headers).not.toContain("email");
-    const dateIndex = headers.indexOf("Дата валидации") + 1;
+    const dateIndex = headers.indexOf("Дата последней валидации") + 1;
     let foundRuDate = false;
     registry?.eachRow((row, number) => {
       if (number === 1) {

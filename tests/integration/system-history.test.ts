@@ -81,15 +81,18 @@ async function loginAs(username: string): Promise<string> {
 function systemBody(owners: { process: string; system: string }, name: string) {
   return {
     name,
+    domain: "QC",
     system_type: "LIMS",
     hosting_type: "on_prem",
     data_classification: "internal",
     is_gxp_relevant: true,
     criticality: "medium",
+    gxp_criticality: "medium",
+    gamp_category: "5",
     lifecycle_status: "active",
-    validation_status: "not_validated",
-    process_owner_id: owners.process,
-    system_owner_id: owners.system,
+    validation_status: "in_validation",
+    system_owner: { user_id: owners.system },
+    process_owners: [{ user_id: owners.process }],
   };
 }
 
@@ -296,7 +299,7 @@ describe("история объекта КС", () => {
       jsonRequest(`http://127.0.0.1/api/v1/systems/${id}`, {
         method: "PATCH",
         cookie,
-        body: { version, process_owner_id: viewer.id },
+        body: { version, process_owners: [{ user_id: viewer.id }], reason: "Передача владельца" },
       }),
       routeParams(id),
     );
@@ -311,10 +314,10 @@ describe("история объекта КС", () => {
       (item) => item.action === "update",
     );
     expect(updateEvent).toBeDefined();
-    expect(updateEvent?.before?.["process_owner_name"]).toBe(editor.username);
-    expect(updateEvent?.after?.["process_owner_name"]).toBe(viewer.username);
-    expect(updateEvent?.before?.["process_owner_name"]).not.toBe("—");
-    expect(updateEvent?.after?.["process_owner_name"]).not.toBe("—");
+    const before = updateEvent?.before?.["process_owners"] as Array<{ full_name: string }> | undefined;
+    const after = updateEvent?.after?.["process_owners"] as Array<{ full_name: string }> | undefined;
+    expect(before?.[0]?.full_name).toBe(editor.username);
+    expect(after?.[0]?.full_name).toBe(viewer.username);
   });
 
   it("выгрузка карточки не растит ленту; export остаётся в общем журнале у admin и auditor", async () => {

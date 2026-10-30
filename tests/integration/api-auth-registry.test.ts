@@ -71,16 +71,19 @@ async function loginAs(username: string, password: string = PASSWORD): Promise<s
 function systemBody(owners: { process: string; system: string; quality?: string | null }) {
   return {
     name: "Лабораторная система",
+    domain: "QC",
     system_type: "LIMS",
     hosting_type: "on_prem",
     data_classification: "internal",
     is_gxp_relevant: true,
     criticality: "medium",
+    gxp_criticality: "medium",
+    gamp_category: "5",
     lifecycle_status: "active",
-    validation_status: "not_validated",
-    process_owner_id: owners.process,
-    system_owner_id: owners.system,
-    quality_owner_id: owners.quality,
+    validation_status: "in_validation",
+    system_owner: { user_id: owners.system },
+    process_owners: [{ user_id: owners.process }],
+    quality_owner_id: owners.quality ?? null,
     vendor: "Citroën",
   };
 }
@@ -182,7 +185,7 @@ describe("auth + registry API", () => {
     expect(events.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("создание без владельцев — 422 OWNERS_REQUIRED и отказ в аудите, строки нет", async () => {
+  it("создание без домена — 400 VALIDATION_ERROR с полем domain, строки нет", async () => {
     const cookie = await loginAs(editor.username);
     const before = await sql`SELECT count(*)::int AS n FROM systems`;
     const response = await createSystem(
@@ -190,7 +193,7 @@ describe("auth + registry API", () => {
         method: "POST",
         cookie,
         body: {
-          name: "Без владельцев",
+          name: "Без домена",
           system_type: "LIMS",
           hosting_type: "on_prem",
           data_classification: "internal",
@@ -201,16 +204,13 @@ describe("auth + registry API", () => {
         },
       }),
     );
-    expect(response.status).toBe(422);
+    expect(response.status).toBe(400);
     const body = await readJson(response);
-    expect(body["code"]).toBe("OWNERS_REQUIRED");
+    expect(body["code"]).toBe("VALIDATION_ERROR");
+    const fields = Array.isArray(body["fields"]) ? (body["fields"] as Array<{ field: string }>) : [];
+    expect(fields.some((f) => f.field === "domain")).toBe(true);
     const after = await sql`SELECT count(*)::int AS n FROM systems`;
     expect(after[0]?.n).toBe(before[0]?.n);
-    const refusal = await sql`
-      SELECT after FROM audit_events
-      WHERE request_id = ${String(body["requestId"])} AND after->>'code' = 'OWNERS_REQUIRED'
-    `;
-    expect(refusal).toHaveLength(1);
   });
 
   it("параллельное создание не даёт дубль кода", async () => {
@@ -237,8 +237,8 @@ describe("auth + registry API", () => {
     const a = await readJson(first);
     const b = await readJson(second);
     expect(a["code"]).not.toBe(b["code"]);
-    expect(String(a["code"])).toMatch(/^SYS-\d{4,}$/);
-    expect(String(b["code"])).toMatch(/^SYS-\d{4,}$/);
+    expect(String(a["code"])).toMatch(/^SYS-(?:QC|QA|PROD|RnD|LOG|ADM|IT)-\d{4,}$/);
+    expect(String(b["code"])).toMatch(/^SYS-(?:QC|QA|PROD|RnD|LOG|ADM|IT)-\d{4,}$/);
   });
 
   it("PATCH со старым version — 409 VERSION_CONFLICT", async () => {

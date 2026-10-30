@@ -3,20 +3,33 @@ import type { ErrorCode } from "@/server/http/errors";
 import {
   AUDIT_ACTIONS,
   AUDIT_ENTITY_TYPES,
+  BACKUP_FREQUENCIES,
+  COMPANY_CODES,
   CRITICALITIES,
   DATA_CLASSIFICATIONS,
+  GAMP_CATEGORIES,
   HOSTING_TYPES,
   LIFECYCLE_STATUSES,
+  PERSON_ROLES,
+  SERVER_TYPES,
+  SYSTEM_DOMAINS,
   SYSTEM_TYPE_GROUPS,
   SYSTEM_TYPES,
   USER_ROLES,
   VALIDATION_STATUSES,
   type AuditAction,
   type AuditEntityType,
+  type BackupFrequency,
+  type CompanyCode,
   type Criticality,
   type DataClassification,
+  type DocumentKind,
+  type GampCategory,
   type HostingType,
   type LifecycleStatus,
+  type PersonRole,
+  type ServerType,
+  type SystemDomain,
   type SystemType,
   type ValidationStatus,
 } from "@/server/db/enums";
@@ -193,32 +206,57 @@ export const REJECTION_LABELS: Record<ErrorCode, string> = {
 
 export const FIELD_LABELS: Record<string, string> = {
   name: "Наименование",
-  code: "Код",
-  vendor: "Вендор",
-  product_version: "Версия продукта",
+  code: "ID системы",
+  domain: "Домен",
+  purpose: "Назначение системы",
+  release: "Релиз",
+  vendor: "Подрядчик",
+  product_version: "Версия",
   description: "Описание",
   system_type: "Тип",
   business_process: "Бизнес-процесс",
   process_owner_id: "Владелец процесса",
   process_owner_name: "Владелец процесса",
+  process_owners: "Владельцы процесса",
+  key_users: "Ключевые пользователи",
+  system_owner: "Владелец системы",
   system_owner_id: "Владелец системы",
   system_owner_name: "Владелец системы",
+  system_owner_name_text: "Владелец системы (ФИО)",
+  release_manager: "РПП",
+  release_manager_user_id: "РПП",
+  release_manager_name: "РПП",
   quality_owner_id: "Владелец качества",
   quality_owner_name: "Владелец качества",
+  support_people: "Поддержка",
+  project_managers: "Проектный менеджер",
+  analysts: "Бизнес-/системный аналитик",
+  developers: "Разработчик",
+  testers: "Тестировщик",
+  companies: "Компании группы",
+  server: "Сервер",
+  server_type: "Тип сервера",
   site: "Площадка",
   hosting_type: "Размещение",
   hosting_provider: "Провайдер",
   data_classification: "Классификация данных",
-  is_gxp_relevant: "Относится к GxP",
-  criticality: "Критичность",
+  is_gxp_relevant: "Система относится к GxP",
+  criticality: "Общая критичность",
+  gxp_criticality: "GxP-критичность",
+  gamp_category: "Категория GAMP 5",
   lifecycle_status: "Жизненный цикл",
   validation_status: "Статус валидации",
-  validated_at: "Дата валидации",
-  next_review_at: "Следующая переоценка",
+  validated_at: "Дата последней валидации",
+  next_review_at: "Плановая ревалидация",
   auth_model: "Модель аутентификации",
-  backup_rpo_hours: "RPO резервного копирования, ч",
-  backup_rto_hours: "RTO резервного копирования, ч",
+  backup_frequency: "Периодичность бэкапа",
+  backup_rpo_hours: "RPO, ч",
+  backup_rto_hours: "RTO, ч",
+  integrations: "Интеграции",
+  internal_documents: "Внутренняя документация",
+  vendor_documents: "Документация вендора",
   notes: "Примечания",
+  devops: "DevOps",
   archived_at: "Дата архивации",
   created_at: "Создана",
   updated_at: "Изменена",
@@ -252,6 +290,99 @@ export const FIELD_LABELS: Record<string, string> = {
   xlsx: "Excel",
   pdf: "PDF",
 };
+
+export const DOMAIN_LABELS: Record<SystemDomain, string> = {
+  QC: "Контроль качества",
+  QA: "Обеспечение качества",
+  PROD: "Производство",
+  RnD: "Исследования и разработки",
+  LOG: "Логистика",
+  ADM: "Административные процессы",
+  IT: "ИТ",
+};
+
+export function domainOptionLabel(value: SystemDomain): string {
+  return `${value} — ${DOMAIN_LABELS[value]}`;
+}
+
+export const GAMP_LABELS: Record<GampCategory, string> = {
+  "1": "1 — Инфраструктурное ПО",
+  "3": "3 — Коммерческое неконфигурируемое",
+  "4": "4 — Конфигурируемое",
+  "5": "5 — Заказная разработка",
+};
+
+export const PERSON_ROLE_LABELS: Record<PersonRole, string> = {
+  process_owner: "Владелец процесса",
+  system_owner: "Владелец системы",
+  release_manager: "РПП",
+  key_user: "Ключевой пользователь",
+  support: "Поддержка",
+  project_manager: "Проектный менеджер",
+  analyst: "Бизнес-/системный аналитик",
+  developer: "Разработчик",
+  tester: "Тестировщик",
+};
+
+export const COMPANY_LABELS: Record<CompanyCode, string> = {
+  BE: "Бе",
+  BI: "Би",
+  PRO: "Про",
+  PROR: "ПроР",
+  PROD_CO: "ПроД",
+  AR: "Ар",
+};
+
+export const SERVER_TYPE_LABELS: Record<ServerType, string> = {
+  physical: "Физический",
+  virtual: "Виртуальный",
+  cloud: "Облачный",
+  container: "Контейнер",
+  other: "Другое",
+};
+
+export const BACKUP_FREQUENCY_LABELS: Record<BackupFrequency, string> = {
+  hourly: "Ежечасно",
+  daily: "Ежедневно",
+  weekly: "Еженедельно",
+  monthly: "Ежемесячно",
+  other: "Другое",
+};
+
+export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
+  internal: "Внутренняя документация",
+  vendor: "Документация вендора",
+};
+
+export const DOMAIN_OPTIONS = SYSTEM_DOMAINS.map((value) => ({
+  value,
+  label: domainOptionLabel(value),
+}));
+
+export const GAMP_OPTIONS = GAMP_CATEGORIES.map((value) => ({
+  value,
+  label: GAMP_LABELS[value],
+}));
+
+export const COMPANY_OPTIONS = COMPANY_CODES.map((value) => ({
+  value,
+  label: COMPANY_LABELS[value],
+}));
+
+export const SERVER_TYPE_OPTIONS = SERVER_TYPES.map((value) => ({
+  value,
+  label: SERVER_TYPE_LABELS[value],
+}));
+
+export const BACKUP_FREQUENCY_OPTIONS = BACKUP_FREQUENCIES.map((value) => ({
+  value,
+  label: BACKUP_FREQUENCY_LABELS[value],
+}));
+
+export const PERSON_ROLE_OPTIONS = PERSON_ROLES.map((value) => ({
+  value,
+  label: PERSON_ROLE_LABELS[value],
+}));
 
 export const SYSTEM_TYPE_OPTIONS = SYSTEM_TYPES.map((value) => ({
   value,

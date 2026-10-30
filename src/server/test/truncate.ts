@@ -5,7 +5,7 @@ export type ApplicationTable = "sessions" | "systems" | "users" | "audit_events"
 export async function truncateApplicationTables(adminUrl: string): Promise<void> {
   const sql = postgres(adminUrl, { max: 1 });
   try {
-    await sql`TRUNCATE TABLE sessions, systems, users, audit_events RESTART IDENTITY CASCADE`;
+    await sql`TRUNCATE TABLE sessions, system_documents, system_companies, system_people, systems, users, audit_events RESTART IDENTITY CASCADE`;
   } finally {
     await sql.end({ timeout: 5 });
   }

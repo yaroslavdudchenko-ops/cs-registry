@@ -18,12 +18,21 @@ export function jsonResult(
   return new Response(JSON.stringify(body), { status, headers });
 }
 
-export function jsonError(code: ErrorCode, requestId: string, message?: string): Response {
-  return jsonResult(ERROR_HTTP_STATUS[code], {
+export function jsonError(
+  code: ErrorCode,
+  requestId: string,
+  message?: string,
+  fields?: readonly { field: string; message: string }[],
+): Response {
+  const body: Record<string, unknown> = {
     code,
     message: message ?? ERROR_MESSAGES[code],
     requestId,
-  }, requestId);
+  };
+  if (fields !== undefined && fields.length > 0) {
+    body.fields = fields;
+  }
+  return jsonResult(ERROR_HTTP_STATUS[code], body, requestId);
 }
 
 export function fileResult(

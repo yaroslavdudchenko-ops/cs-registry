@@ -100,10 +100,9 @@ async function assertSystemsListLayout(page: Page, screenshotSuffix: string): Pr
   const rowCount = await table.locator("tbody tr").count();
   expect(rowCount).toBeGreaterThanOrEqual(15);
 
-  await expect(page.getByRole("link", { name: "Юридический документооборот и претензионная работа" })).toBeVisible();
-  await expect(page.getByText("Площадка Москва, корпус А")).toBeVisible();
-  await expect(page.getByText("CONTRACT", { exact: true })).toBeVisible();
-  await expect(page.getByText("Площадка Качество").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Юридический документообор" })).toBeVisible();
+  // В 0.9.0 по умолчанию видны домен и системный владелец, вместо прежних Площадка и Тип.
+  await expect(table.getByText("IT — ИТ", { exact: true }).first()).toBeVisible();
 
   const overflows = await table.locator("tbody td").evaluateAll((cells) =>
     cells

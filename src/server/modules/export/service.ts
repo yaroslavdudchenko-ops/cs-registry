@@ -41,11 +41,21 @@ function contentTypeOf(format: ExportFormat): string {
 
 function toListQuery(input: ExportQueryInput): Omit<SystemListQuery, "page" | "pageSize"> {
   const archivedRaw = input.archived;
+  const gxpRaw = input.gxp;
+  const isGxp =
+    gxpRaw === undefined ? null : gxpRaw === "1" || gxpRaw === "true";
   return {
     q: input.q ?? null,
     type: input.type ?? null,
+    domain: input.domain ?? null,
     criticality: input.criticality ?? null,
+    gxpCriticality: input.gxp_criticality ?? null,
+    gampCategory: input.gamp_category ?? null,
     status: input.status ?? null,
+    validationStatus: input.validation_status ?? null,
+    isGxp,
+    company: input.company ?? null,
+    ownerId: input.owner ?? null,
     processOwnerId: input.process_owner ?? null,
     site: input.site ?? null,
     includeArchived: archivedRaw === "1" || archivedRaw === "true",

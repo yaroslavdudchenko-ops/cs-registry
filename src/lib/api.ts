@@ -1,10 +1,19 @@
+export type ApiFieldError = { field: string; message: string };
+
 export type ApiFailure = {
   ok: false;
   status: number;
   code: string;
   message: string;
   requestId: string;
+  data?: { fields?: ApiFieldError[] };
 };
+
+export function isApiErrorResponse(
+  value: unknown,
+): value is { fields?: ApiFieldError[]; message?: string; code?: string } {
+  return typeof value === "object" && value !== null && "code" in value;
+}
 
 export type ApiSuccess<T> = {
   ok: true;
@@ -68,12 +77,25 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<A
     const code = typeof record["code"] === "string" ? record["code"] : "ERROR";
     const message =
       typeof record["message"] === "string" ? record["message"] : "Не удалось выполнить запрос";
+    const rawFields = record["fields"];
+    const fields: ApiFieldError[] = Array.isArray(rawFields)
+      ? rawFields
+          .filter(
+            (f): f is { field: string; message: string } =>
+              typeof f === "object" &&
+              f !== null &&
+              typeof (f as { field?: unknown }).field === "string" &&
+              typeof (f as { message?: unknown }).message === "string",
+          )
+          .map((f) => ({ field: f.field, message: f.message }))
+      : [];
     return {
       ok: false,
       status: response.status,
       code,
       message,
       requestId: requestIdFrom(response, record),
+      data: { fields },
     };
   }
 

@@ -43,6 +43,13 @@
       "when": 1793279287634,
       "tag": "0005_system_type_enum",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793366400000,
+      "tag": "0006_v090_blocks",
+      "breakpoints": true
     }
   ]
 }

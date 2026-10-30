@@ -26,11 +26,21 @@ export async function GET(request: Request): Promise<Response> {
       return jsonError("VALIDATION_ERROR", extras.requestId);
     }
     const archivedRaw = parsed.data.archived;
+    const gxpRaw = parsed.data.gxp;
+    const isGxp =
+      gxpRaw === undefined ? null : gxpRaw === "1" || gxpRaw === "true";
     const result = await listSystemRecords({
       q: parsed.data.q ?? null,
       type: parsed.data.type ?? null,
+      domain: parsed.data.domain ?? null,
       criticality: parsed.data.criticality ?? null,
+      gxpCriticality: parsed.data.gxp_criticality ?? null,
+      gampCategory: parsed.data.gamp_category ?? null,
       status: parsed.data.status ?? null,
+      validationStatus: parsed.data.validation_status ?? null,
+      isGxp,
+      company: parsed.data.company ?? null,
+      ownerId: parsed.data.owner ?? null,
       processOwnerId: parsed.data.process_owner ?? null,
       site: parsed.data.site ?? null,
       includeArchived: archivedRaw === "1" || archivedRaw === "true",

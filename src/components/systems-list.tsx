@@ -17,12 +17,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/components/session-provider";
 import { apiRequest } from "@/lib/api";
 import {
+  COMPANY_LABELS,
+  COMPANY_OPTIONS,
   CRITICALITY_LABELS,
   CRITICALITY_OPTIONS,
+  DOMAIN_LABELS,
+  DOMAIN_OPTIONS,
+  GAMP_LABELS,
+  GAMP_OPTIONS,
   LIFECYCLE_LABELS,
   LIFECYCLE_OPTIONS,
   SYSTEM_TYPE_LABELS,
   VALIDATION_LABELS,
+  VALIDATION_OPTIONS,
   canCreateSystem,
 } from "@/lib/labels";
 import {
@@ -33,6 +40,199 @@ import {
 import { cn } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 250;
+const COLUMNS_LS_KEY = "cs-registry:list-columns:v1";
+
+type ColumnDef = {
+  key: string;
+  header: string;
+  render: (item: SystemListItem) => React.ReactNode;
+  defaultVisible: boolean;
+  group: string;
+};
+
+const COLUMNS: ColumnDef[] = [
+  {
+    key: "code",
+    header: "ID",
+    group: "Идентификация",
+    defaultVisible: true,
+    render: (item) => (
+      <Link href={`/systems/${item.id}`} className="whitespace-nowrap text-accent underline-offset-2 hover:underline">
+        {item.code}
+      </Link>
+    ),
+  },
+  {
+    key: "name",
+    header: "Название",
+    group: "Идентификация",
+    defaultVisible: true,
+    render: (item) => (
+      <Link href={`/systems/${item.id}`} className="hover:underline">
+        {item.name}
+      </Link>
+    ),
+  },
+  {
+    key: "domain",
+    header: "Домен",
+    group: "Идентификация",
+    defaultVisible: true,
+    render: (item) => `${item.domain} — ${DOMAIN_LABELS[item.domain]}`,
+  },
+  {
+    key: "system_owner_name",
+    header: "Владелец системы",
+    group: "Владельцы",
+    defaultVisible: true,
+    render: (item) => item.system_owner_name ?? "—",
+  },
+  {
+    key: "is_gxp_relevant",
+    header: "GxP",
+    group: "GxP",
+    defaultVisible: true,
+    render: (item) => (item.is_gxp_relevant ? "Да" : "Нет"),
+  },
+  {
+    key: "validation_status",
+    header: "Статус валидации",
+    group: "GxP",
+    defaultVisible: true,
+    render: (item) => VALIDATION_LABELS[item.validation_status],
+  },
+  {
+    key: "lifecycle_status",
+    header: "Жизненный цикл",
+    group: "Инфраструктура",
+    defaultVisible: true,
+    render: (item) => LIFECYCLE_LABELS[item.lifecycle_status],
+  },
+  {
+    key: "companies",
+    header: "Компания",
+    group: "Компания",
+    defaultVisible: true,
+    render: (item) => (item.companies.length === 0 ? "—" : item.companies.map((c) => COMPANY_LABELS[c]).join(", ")),
+  },
+  {
+    key: "next_review_at",
+    header: "Плановая ревалидация",
+    group: "GxP",
+    defaultVisible: true,
+    render: (item) => item.next_review_at ?? "—",
+  },
+  // optional
+  {
+    key: "system_type",
+    header: "Тип",
+    group: "Идентификация",
+    defaultVisible: false,
+    render: (item) => SYSTEM_TYPE_LABELS[item.system_type],
+  },
+  {
+    key: "criticality",
+    header: "Общая критичность",
+    group: "GxP",
+    defaultVisible: false,
+    render: (item) => CRITICALITY_LABELS[item.criticality],
+  },
+  {
+    key: "gxp_criticality",
+    header: "GxP-критичность",
+    group: "GxP",
+    defaultVisible: false,
+    render: (item) => (item.gxp_criticality === null ? "—" : CRITICALITY_LABELS[item.gxp_criticality]),
+  },
+  {
+    key: "gamp_category",
+    header: "GAMP",
+    group: "GxP",
+    defaultVisible: false,
+    render: (item) => (item.gamp_category === null ? "—" : GAMP_LABELS[item.gamp_category]),
+  },
+  {
+    key: "process_owner_name",
+    header: "Владелец процесса",
+    group: "Владельцы",
+    defaultVisible: false,
+    render: (item) => item.process_owner_name ?? "—",
+  },
+  {
+    key: "release_manager_name",
+    header: "РПП",
+    group: "Владельцы",
+    defaultVisible: false,
+    render: (item) => item.release_manager_name ?? "—",
+  },
+  {
+    key: "quality_owner_name",
+    header: "Владелец качества",
+    group: "Владельцы",
+    defaultVisible: false,
+    render: (item) => item.quality_owner_name ?? "—",
+  },
+  {
+    key: "vendor",
+    header: "Подрядчик",
+    group: "Идентификация",
+    defaultVisible: false,
+    render: (item) => item.vendor ?? "—",
+  },
+  {
+    key: "product_version",
+    header: "Версия",
+    group: "Идентификация",
+    defaultVisible: false,
+    render: (item) => item.product_version ?? "—",
+  },
+  {
+    key: "release",
+    header: "Релиз",
+    group: "Идентификация",
+    defaultVisible: false,
+    render: (item) => item.release ?? "—",
+  },
+  {
+    key: "purpose",
+    header: "Назначение",
+    group: "Идентификация",
+    defaultVisible: false,
+    render: (item) => item.purpose ?? "—",
+  },
+  {
+    key: "site",
+    header: "Площадка",
+    group: "Инфраструктура",
+    defaultVisible: false,
+    render: (item) => item.site ?? "—",
+  },
+  {
+    key: "server",
+    header: "Сервер",
+    group: "Инфраструктура",
+    defaultVisible: false,
+    render: (item) => item.server ?? "—",
+  },
+  {
+    key: "integrations",
+    header: "Интеграции",
+    group: "Инфраструктура",
+    defaultVisible: false,
+    render: (item) => (item.integrations.length === 0 ? "—" : item.integrations.join(", ")),
+  },
+  {
+    key: "notes",
+    header: "Примечания",
+    group: "Прочее",
+    defaultVisible: false,
+    render: (item) => item.notes ?? "—",
+  },
+];
+
+function defaultVisible(): Set<string> {
+  return new Set(COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key));
+}
 
 function readParam(params: URLSearchParams, key: string): string {
   return params.get(key) ?? "";
@@ -47,12 +247,44 @@ export function SystemsList(): React.JSX.Element {
 
   const qParam = readParam(searchParams, "q");
   const type = readParam(searchParams, "type");
+  const domain = readParam(searchParams, "domain");
   const status = readParam(searchParams, "status");
+  const validationStatus = readParam(searchParams, "validation_status");
   const criticality = readParam(searchParams, "criticality");
+  const gxpCriticality = readParam(searchParams, "gxp_criticality");
+  const gampCategory = readParam(searchParams, "gamp_category");
+  const gxp = readParam(searchParams, "gxp");
+  const company = readParam(searchParams, "company");
+  const owner = readParam(searchParams, "owner");
   const site = readParam(searchParams, "site");
   const archived = readParam(searchParams, "archived");
-  const sort = readParam(searchParams, "sort") || "code";
-  const order = readParam(searchParams, "order") || "asc";
+
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return defaultVisible();
+    try {
+      const raw = window.localStorage.getItem(COLUMNS_LS_KEY);
+      if (raw === null) return defaultVisible();
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return defaultVisible();
+      const keys = parsed.filter((v): v is string => typeof v === "string");
+      if (keys.length === 0) return defaultVisible();
+      return new Set(keys);
+    } catch {
+      return defaultVisible();
+    }
+  });
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const toggleColumn = (key: string): void => {
+    const next = new Set(visibleColumns);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setVisibleColumns(next);
+    try {
+      window.localStorage.setItem(COLUMNS_LS_KEY, JSON.stringify([...next]));
+    } catch {
+      // localStorage недоступен — выбор не переживёт перезагрузку
+    }
+  };
 
   const [searchInput, setSearchInput] = useState(qParam);
   const [data, setData] = useState<SystemListResponse | null>(null);
@@ -74,9 +306,7 @@ export function SystemsList(): React.JSX.Element {
         next.set(key, value);
       }
     }
-    if (resetPage) {
-      next.delete("page");
-    }
+    if (resetPage) next.delete("page");
     const qs = next.toString();
     router.replace(qs.length > 0 ? `${pathname}?${qs}` : pathname);
   }
@@ -84,23 +314,18 @@ export function SystemsList(): React.JSX.Element {
   useEffect(() => {
     const handle = window.setTimeout(() => {
       const trimmed = searchInput.trim();
-      if (trimmed.length === 1) {
-        return;
-      }
+      if (trimmed.length === 1) return;
       const nextQ = trimmed.length >= 2 ? trimmed : "";
-      if (nextQ === qParam) {
-        return;
-      }
+      if (nextQ === qParam) return;
       replaceQuery({ q: nextQ.length === 0 ? null : nextQ });
     }, SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce only tracks the input field
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const queryKey = useMemo(() => searchParams.toString(), [searchParams]);
   const requestKey = `${queryKey}#${String(reloadToken)}`;
-  const error =
-    errorState !== null && errorState.key === requestKey ? errorState : null;
+  const error = errorState !== null && errorState.key === requestKey ? errorState : null;
   const loading = error === null && resolvedKey !== requestKey;
 
   function resetFilters(): void {
@@ -115,65 +340,47 @@ export function SystemsList(): React.JSX.Element {
     const path = `/api/v1/systems${queryKey.length > 0 ? `?${queryKey}` : ""}`;
     void (async () => {
       const result = await apiRequest<unknown>(path, { method: "GET", signal: controller.signal });
-      if (controller.signal.aborted) {
-        return;
-      }
+      if (controller.signal.aborted) return;
       if (!result.ok) {
         if (result.status === 401) {
           router.replace("/login");
           return;
         }
-        setErrorState({
-          key: requestKey,
-          message: "Не удалось загрузить данные",
-          requestId: result.requestId,
-        });
+        setErrorState({ key: requestKey, message: "Не удалось загрузить данные", requestId: result.requestId });
         setResolvedKey(requestKey);
         return;
       }
       const parsed = systemListResponseSchema.safeParse(result.data);
       if (!parsed.success) {
-        setErrorState({
-          key: requestKey,
-          message: "Не удалось загрузить данные",
-          requestId: result.requestId,
-        });
+        setErrorState({ key: requestKey, message: "Не удалось загрузить данные", requestId: result.requestId });
         setResolvedKey(requestKey);
         return;
       }
       setData(parsed.data);
       setResolvedKey(requestKey);
     })();
-
     return () => controller.abort();
   }, [queryKey, reloadToken, requestKey, router]);
 
   const hasFilters =
     qParam.length > 0 ||
     type.length > 0 ||
+    domain.length > 0 ||
     status.length > 0 ||
+    validationStatus.length > 0 ||
     criticality.length > 0 ||
+    gxpCriticality.length > 0 ||
+    gampCategory.length > 0 ||
+    gxp.length > 0 ||
+    company.length > 0 ||
+    owner.length > 0 ||
     site.length > 0 ||
-    archived === "1" ||
-    archived === "true";
+    archived === "1" || archived === "true";
 
   const totalPages =
     data !== null && data.pageSize > 0 ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
-  function toggleSort(field: string): void {
-    if (sort === field) {
-      replaceQuery({ sort: field, order: order === "asc" ? "desc" : "asc" }, false);
-      return;
-    }
-    replaceQuery({ sort: field, order: "asc" }, false);
-  }
-
-  function sortLabel(field: string, label: string): string {
-    if (sort !== field) {
-      return label;
-    }
-    return order === "asc" ? `${label}, по возрастанию` : `${label}, по убыванию`;
-  }
+  const visibleCols = COLUMNS.filter((c) => visibleColumns.has(c.key));
 
   return (
     <section className="space-y-5">
@@ -199,47 +406,118 @@ export function SystemsList(): React.JSX.Element {
             id="systems-search"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Код, название или вендор"
+            placeholder="ID, название или подрядчик"
             autoComplete="off"
           />
+        </div>
+        <div>
+          <Label htmlFor="filter-domain">Домен</Label>
+          <Select id="filter-domain" value={domain} onValueChange={(v) => replaceQuery({ domain: v })}>
+            <option value="">Все домены</option>
+            {DOMAIN_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-company">Компания</Label>
+          <Select id="filter-company" value={company} onValueChange={(v) => replaceQuery({ company: v })}>
+            <option value="">Все компании</option>
+            {COMPANY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-gxp">GxP</Label>
+          <Select id="filter-gxp" value={gxp} onValueChange={(v) => replaceQuery({ gxp: v })}>
+            <option value="">Все</option>
+            <option value="1">Относится к GxP</option>
+            <option value="0">Не относится</option>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-gxp-crit">GxP-критичность</Label>
+          <Select
+            id="filter-gxp-crit"
+            value={gxpCriticality}
+            onValueChange={(v) => replaceQuery({ gxp_criticality: v })}
+          >
+            <option value="">Любая</option>
+            {CRITICALITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-gamp">GAMP</Label>
+          <Select
+            id="filter-gamp"
+            value={gampCategory}
+            onValueChange={(v) => replaceQuery({ gamp_category: v })}
+          >
+            <option value="">Все</option>
+            {GAMP_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-validation">Статус валидации</Label>
+          <Select
+            id="filter-validation"
+            value={validationStatus}
+            onValueChange={(v) => replaceQuery({ validation_status: v })}
+          >
+            <option value="">Все статусы</option>
+            {VALIDATION_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="filter-status">Жизненный цикл</Label>
+          <Select id="filter-status" value={status} onValueChange={(v) => replaceQuery({ status: v })}>
+            <option value="">Все статусы</option>
+            {LIFECYCLE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
         </div>
         <div>
           <Label htmlFor="filter-type">Тип</Label>
           <Select
             id="filter-type"
             value={type}
-            onValueChange={(value) => replaceQuery({ type: value })}
+            onValueChange={(v) => replaceQuery({ type: v })}
             className={SYSTEM_TYPE_SELECT_CLASS}
           >
             <SystemTypeSelectOptions includeAllLabel="Все типы" />
           </Select>
         </div>
         <div>
-          <Label htmlFor="filter-status">Статус жизненного цикла</Label>
-          <Select
-            id="filter-status"
-            value={status}
-            onValueChange={(value) => replaceQuery({ status: value })}
-          >
-            <option value="">Все статусы</option>
-            {LIFECYCLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="filter-criticality">Критичность</Label>
+          <Label htmlFor="filter-criticality">Общая критичность</Label>
           <Select
             id="filter-criticality"
             value={criticality}
-            onValueChange={(value) => replaceQuery({ criticality: value })}
+            onValueChange={(v) => replaceQuery({ criticality: v })}
           >
             <option value="">Любая</option>
-            {CRITICALITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {CRITICALITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </Select>
@@ -270,6 +548,31 @@ export function SystemsList(): React.JSX.Element {
             <Button variant="ghost" onClick={resetFilters}>
               Сбросить фильтры
             </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button variant="outline" size="sm" onClick={() => setColumnsOpen((v) => !v)}>
+          Колонки
+        </Button>
+        {columnsOpen ? (
+          <div className="w-full rounded-lg border border-line bg-surface p-4" role="region" aria-label="Выбор колонок">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {COLUMNS.map((col) => (
+                <label key={col.key} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.has(col.key)}
+                    data-testid={`columns-toggle-${col.key}`}
+                    onChange={() => toggleColumn(col.key)}
+                    className="size-4 accent-accent"
+                  />
+                  <span>{col.header}</span>
+                  <span className="text-xs text-muted">({col.group})</span>
+                </label>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>
@@ -319,47 +622,25 @@ export function SystemsList(): React.JSX.Element {
               <caption className="sr-only">Список компьютеризированных систем</caption>
               <thead className="border-b border-line bg-background/80 text-sm text-muted">
                 <tr>
-                  <SortHeader
-                    label="Код"
-                    field="code"
-                    current={sort}
-                    order={order}
-                    onToggle={toggleSort}
-                    ariaLabel={sortLabel("code", "Код")}
-                  />
-                  <SortHeader
-                    label="Наименование"
-                    field="name"
-                    current={sort}
-                    order={order}
-                    onToggle={toggleSort}
-                    ariaLabel={sortLabel("name", "Наименование")}
-                  />
-                  <th className="px-1.5 py-3 font-medium">Тип</th>
-                  <SortHeader
-                    label="Критичность"
-                    field="criticality"
-                    current={sort}
-                    order={order}
-                    onToggle={toggleSort}
-                    ariaLabel={sortLabel("criticality", "Критичность")}
-                  />
-                  <SortHeader
-                    label="Жизненный цикл"
-                    field="lifecycle_status"
-                    current={sort}
-                    order={order}
-                    onToggle={toggleSort}
-                    ariaLabel={sortLabel("lifecycle_status", "Жизненный цикл")}
-                  />
-                  <th className="px-1.5 py-3 font-medium">Владелец процесса</th>
-                  <th className="px-1.5 py-3 font-medium">Площадка</th>
-                  <th className="px-1.5 py-3 font-medium">Валидация</th>
+                  {visibleCols.map((col) => (
+                    <th
+                      key={col.key}
+                      className={cn("px-1.5 py-3 font-medium", col.key === "code" && "whitespace-nowrap")}
+                    >
+                      {col.header}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {data.items.map((item) => (
-                  <SystemRow key={item.id} item={item} />
+                  <tr key={item.id} className="border-b border-line last:border-b-0 hover:bg-accent-soft/40">
+                    {visibleCols.map((col) => (
+                      <td key={col.key} className={cn("px-1.5 py-3", col.key === "code" && "whitespace-nowrap font-medium")}>
+                        {col.render(item)}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -390,68 +671,6 @@ export function SystemsList(): React.JSX.Element {
         </>
       ) : null}
     </section>
-  );
-}
-
-function SystemRow({ item }: { item: SystemListItem }): React.JSX.Element {
-  return (
-    <tr className="border-b border-line last:border-b-0 hover:bg-accent-soft/40">
-      <td className="px-1.5 py-3 font-medium whitespace-nowrap">
-        <Link href={`/systems/${item.id}`} className="whitespace-nowrap text-accent underline-offset-2 hover:underline">
-          {item.code}
-        </Link>
-      </td>
-      <td className="px-1.5 py-3">
-        <Link href={`/systems/${item.id}`} className="hover:underline">
-          {item.name}
-        </Link>
-      </td>
-      <td className="px-1.5 py-3 whitespace-nowrap">{SYSTEM_TYPE_LABELS[item.system_type]}</td>
-      <td className="px-1.5 py-3 whitespace-nowrap">{CRITICALITY_LABELS[item.criticality]}</td>
-      <td className="px-1.5 py-3 whitespace-nowrap">{LIFECYCLE_LABELS[item.lifecycle_status]}</td>
-      <td className="px-1.5 py-3">{item.process_owner_name}</td>
-      <td className="px-1.5 py-3">{item.site ?? "—"}</td>
-      <td className="px-1.5 py-3 whitespace-nowrap">{VALIDATION_LABELS[item.validation_status]}</td>
-    </tr>
-  );
-}
-
-function SortHeader({
-  label,
-  field,
-  current,
-  order,
-  onToggle,
-  ariaLabel,
-  nowrap = false,
-  className,
-}: {
-  label: string;
-  field: string;
-  current: string;
-  order: string;
-  onToggle: (field: string) => void;
-  ariaLabel: string;
-  nowrap?: boolean;
-  className?: string;
-}): React.JSX.Element {
-  const active = current === field;
-  return (
-    <th className={cn("px-1.5 py-3 font-medium", nowrap && "whitespace-nowrap", className)}>
-      <button
-        type="button"
-        className={cn(
-          "text-left hover:text-ink",
-          active ? "text-ink" : "text-muted",
-          nowrap && "whitespace-nowrap",
-        )}
-        onClick={() => onToggle(field)}
-        aria-label={ariaLabel}
-      >
-        {label}
-        {active ? <span aria-hidden="true">{order === "asc" ? " ↑" : " ↓"}</span> : null}
-      </button>
-    </th>
   );
 }
 

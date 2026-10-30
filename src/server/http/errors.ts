@@ -47,12 +47,20 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
 
 export const LOGIN_FAILED_MESSAGE = "Неверный логин или пароль";
 
+export type FieldError = { field: string; message: string };
+
 export class ApiError extends Error {
   readonly code: ErrorCode;
+  readonly fields: FieldError[];
 
-  constructor(code: ErrorCode, message?: string) {
+  constructor(code: ErrorCode, message?: string, fields: FieldError[] = []) {
     super(message ?? ERROR_MESSAGES[code]);
     this.name = "ApiError";
     this.code = code;
+    this.fields = fields;
   }
+}
+
+export function validationError(fields: FieldError[], message?: string): ApiError {
+  return new ApiError("VALIDATION_ERROR", message, fields);
 }

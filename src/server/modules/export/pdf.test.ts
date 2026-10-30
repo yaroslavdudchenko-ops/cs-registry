@@ -1,46 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { SystemRow } from "@/server/db/systems-repository";
-
 import { buildCardPdf, buildRegistryPdf } from "./pdf";
 import type { ExportMeta } from "./params";
-
-function sampleRow(): SystemRow {
-  return {
-    id: "9a13fe66-81e4-471a-8816-f5b2cd51e2ff",
-    code: "SYS-0001",
-    name: "Параллель А",
-    vendor: "Citroën",
-    product_version: "1.2",
-    description: "Лабораторная система",
-    system_type: "LIMS",
-    business_process: "QC",
-    process_owner_id: "e6c703ef-bb50-419e-b414-082f53bf7a71",
-    system_owner_id: "2a5faf58-1658-48a5-92fe-f9abbfc620df",
-    quality_owner_id: null,
-    process_owner_name: "Иванов Иван",
-    system_owner_name: "Петров Пётр",
-    quality_owner_name: null,
-    site: "Москва",
-    hosting_type: "on_prem",
-    hosting_provider: null,
-    data_classification: "internal",
-    is_gxp_relevant: true,
-    criticality: "medium",
-    lifecycle_status: "active",
-    validation_status: "validated",
-    validated_at: "2026-03-01",
-    next_review_at: "2027-03-01",
-    auth_model: "SSO",
-    backup_rpo_hours: 24,
-    backup_rto_hours: 4,
-    notes: null,
-    archived_at: null,
-    created_at: new Date("2026-10-29T10:00:00.000Z"),
-    updated_at: new Date("2026-10-29T10:00:00.000Z"),
-    version: 1,
-  };
-}
+import { sampleSystemRow as sampleRow } from "./fixtures.test-helpers";
 
 function meta(): ExportMeta {
   return {

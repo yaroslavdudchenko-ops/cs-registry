@@ -41,3 +41,4 @@ next-env.d.ts
 
 # drizzle journal snapshots are committed; kit cache is not
 .drizzle
+.env.prod

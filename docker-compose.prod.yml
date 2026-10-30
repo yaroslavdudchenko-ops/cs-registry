@@ -1,0 +1,66 @@
+# Production: приложение + PostgreSQL 16. Запуск: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# БД наружу НЕ публикуется (нет ports у db). Приложение слушает только 127.0.0.1:${APP_PORT:-3000},
+# снаружи его открывает nginx с HTTPS (docs/DEPLOY-PROD.md).
+name: cs-registry-prod
+
+x-db-urls: &db-urls
+  DATABASE_URL: postgres://cs_registry_app:${CS_REGISTRY_APP_PASSWORD:?задайте CS_REGISTRY_APP_PASSWORD}@db:5432/cs_registry
+  DATABASE_ADMIN_URL: postgres://postgres:${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}@db:5432/cs_registry
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}
+      POSTGRES_DB: cs_registry
+      CS_REGISTRY_APP_PASSWORD: ${CS_REGISTRY_APP_PASSWORD:?задайте CS_REGISTRY_APP_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cs_registry"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: cs-registry-migrate:${APP_VERSION_TAG:-0.9.0}
+    build:
+      context: .
+      target: migrate
+    environment:
+      <<: *db-urls
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: cs-registry:${APP_VERSION_TAG:-0.9.0}
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    environment:
+      <<: *db-urls
+      SESSION_SECURE: ${SESSION_SECURE:-true}
+      SESSION_MINUTES_ADMIN: ${SESSION_MINUTES_ADMIN:-30}
+      SESSION_MINUTES_DEFAULT: ${SESSION_MINUTES_DEFAULT:-10}
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  pgdata:

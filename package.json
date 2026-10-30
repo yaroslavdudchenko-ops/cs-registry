@@ -18,7 +18,8 @@
     "e2e": "playwright test",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --tsconfig tsconfig.json scripts/apply-migrations.ts"
+    "db:migrate": "tsx --tsconfig tsconfig.json scripts/apply-migrations.ts",
+    "admin:create": "tsx --tsconfig tsconfig.json scripts/create-admin.ts"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.17",

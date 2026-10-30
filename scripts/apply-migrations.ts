@@ -56,17 +56,27 @@ async function main(): Promise<void> {
         .split(/-->\s*statement-breakpoint\s*/)
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-      for (const stmt of statements) {
-        try {
-          await sql.unsafe(stmt);
-        } catch (err) {
-          console.error(`FAILED ${entry.tag}:`);
-          console.error("  statement:", stmt.slice(0, 500));
-          console.error("  error:", err instanceof Error ? err.message : err);
-          process.exit(1);
-        }
+      let current = "";
+      // Каждая миграция — одна транзакция: при ошибке база остаётся в
+      // состоянии до миграции, повторный запуск начинает её заново.
+      try {
+        await sql.begin(async (tx) => {
+          for (const stmt of statements) {
+            current = stmt;
+            await tx.unsafe(stmt);
+          }
+          await tx.unsafe(
+            "INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)",
+            [hash, Date.now()],
+          );
+        });
+      } catch (err) {
+        console.error(`FAILED ${entry.tag} (изменения миграции откатены):`);
+        console.error("  statement:", current.slice(0, 500));
+        console.error("  error:", err instanceof Error ? err.message : err);
+        process.exitCode = 1;
+        return;
       }
-      await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES (${hash}, ${Date.now()})`;
       console.log(`applied ${entry.tag}`);
     }
   } finally {

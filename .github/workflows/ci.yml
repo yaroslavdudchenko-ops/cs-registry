@@ -1,0 +1,83 @@
+# Репозиторий живёт в Cursor Origin (origin.cursor.com/my2/cs-registry).
+# GitHub Actions этот файл не запускает: внешних проверок нет.
+# Предполётная проверка — `pnpm ci:local`.
+name: ci
+
+"on":
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.4 --activate
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+        env:
+          SESSION_SECURE: "false"
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cs_registry_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cs_registry_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SESSION_SECURE: "false"
+      DATABASE_URL: postgres://unused:unused@127.0.0.1:5432/cs_registry
+      TEST_DATABASE_URL: postgres://cs_registry_app:test-app-pass@127.0.0.1:5432/cs_registry_test
+      TEST_DATABASE_ADMIN_URL: postgres://postgres:postgres@127.0.0.1:5432/cs_registry_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.4 --activate
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Migrate test database
+        env:
+          DATABASE_ADMIN_URL: postgres://postgres:postgres@127.0.0.1:5432/cs_registry_test
+        run: pnpm db:migrate
+      - name: Grant app role login
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql "postgres://postgres:postgres@127.0.0.1:5432/cs_registry_test" <<'SQL'
+          ALTER ROLE cs_registry_app LOGIN PASSWORD 'test-app-pass';
+          SQL
+      - name: Integration tests
+        run: pnpm test:integration

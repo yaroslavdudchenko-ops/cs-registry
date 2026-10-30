@@ -1,0 +1,27 @@
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'LES' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'ELN' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'LMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'EBR' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'EMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'BMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'CMMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'APS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'CTMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'RIM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'WMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'TMS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'SRM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'CRM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'HRIS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'EHS' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'PLM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'ACC' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'EPM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'LEGAL' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'CONTRACT' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'PAYROLL' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'ITSM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'IAM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'SIEM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'MDM' BEFORE 'other';--> statement-breakpoint
+ALTER TYPE "public"."system_type_enum" ADD VALUE 'BI' BEFORE 'other';

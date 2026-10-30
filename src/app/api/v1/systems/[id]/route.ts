@@ -1,0 +1,42 @@
+import { ApiError } from "@/server/http/errors";
+import { withApi } from "@/server/http/handle";
+import { readJsonBody } from "@/server/http/request";
+import { jsonResult } from "@/server/http/response";
+import { requirePermission } from "@/server/modules/auth/guard";
+import { getSystemRecord, updateSystemRecord } from "@/server/modules/systems/service";
+
+export const dynamic = "force-dynamic";
+
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(request: Request, context: RouteContext): Promise<Response> {
+  return withApi(request, async (extras) => {
+    await requirePermission(request, "systems.read", extras, {
+      action: "read",
+      entityType: "systems",
+      entityId: null,
+      entityLabel: null,
+    });
+    const { id } = await context.params;
+    const row = await getSystemRecord(id);
+    return jsonResult(200, row, extras.requestId);
+  });
+}
+
+export async function PATCH(request: Request, context: RouteContext): Promise<Response> {
+  return withApi(request, async (extras) => {
+    const { id } = await context.params;
+    const auth = await requirePermission(request, "systems.update", extras, {
+      action: "update",
+      entityType: "systems",
+      entityId: id,
+      entityLabel: null,
+    });
+    const raw = await readJsonBody(request);
+    if (raw === null) {
+      throw new ApiError("VALIDATION_ERROR");
+    }
+    const updated = await updateSystemRecord(id, raw, auth.actor, auth.user.role);
+    return jsonResult(200, updated, extras.requestId);
+  });
+}

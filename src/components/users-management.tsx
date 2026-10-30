@@ -17,6 +17,26 @@ import { userListResponseSchema, userRecordSchema, type UserRecord } from "@/lib
 import { USER_ROLES, type UserRole } from "@/server/db/enums";
 
 const MIN_PASSWORD = 12;
+/** Email с точкой в домене: браузерная проверка type=email пропускает «loli@com». */
+const EMAIL_PATTERN = "[^@\\s]+@[^@\\s]+\\.[^@\\s]+";
+
+type FieldErrors = Record<string, string>;
+
+function fieldErrorsFrom(fields: readonly { field: string; message: string }[] | undefined): FieldErrors {
+  const out: FieldErrors = {};
+  for (const f of fields ?? []) {
+    if (f.field.length > 0 && out[f.field] === undefined) out[f.field] = f.message;
+  }
+  return out;
+}
+
+function validationText(
+  result: { code: string; message: string },
+  fallback: string,
+): string {
+  if (result.code === "VALIDATION_ERROR" && result.message.length > 0) return result.message;
+  return apiErrorText(result.code, fallback);
+}
 
 type DialogState =
   | { kind: "create" }
@@ -38,6 +58,7 @@ export function UsersManagement(): React.JSX.Element {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [pending, setPending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [requestId, setRequestId] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
@@ -90,6 +111,7 @@ export function UsersManagement(): React.JSX.Element {
   }, [requestKey, router]);
 
   function closeDialog(): void {
+    setFieldErrors({});
     if (!pending) {
       setDialog(null);
       setFormError(null);
@@ -100,6 +122,7 @@ export function UsersManagement(): React.JSX.Element {
   async function patchUser(id: string, body: Record<string, unknown>): Promise<boolean> {
     setPending(true);
     setFormError(null);
+    setFieldErrors({});
     const result = await apiRequest<unknown>(`/api/v1/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -111,7 +134,8 @@ export function UsersManagement(): React.JSX.Element {
         router.replace("/login");
         return false;
       }
-      setFormError(apiErrorText(result.code, "Не удалось сохранить изменения"));
+      setFieldErrors(fieldErrorsFrom(result.data?.fields));
+      setFormError(validationText(result, "Не удалось сохранить изменения"));
       return false;
     }
     const parsed = userRecordSchema.safeParse(result.data);
@@ -256,11 +280,13 @@ export function UsersManagement(): React.JSX.Element {
         open={dialog?.kind === "create"}
         pending={pending}
         error={formError}
+        fieldErrors={fieldErrors}
         requestId={requestId}
         onClose={closeDialog}
         onCreate={async (payload) => {
           setPending(true);
           setFormError(null);
+          setFieldErrors({});
           const result = await apiRequest<unknown>("/api/v1/users", {
             method: "POST",
             body: JSON.stringify(payload),
@@ -276,7 +302,8 @@ export function UsersManagement(): React.JSX.Element {
               setFormError("Такой логин или адрес уже занят");
               return;
             }
-            setFormError(apiErrorText(result.code, "Не удалось создать пользователя"));
+            setFieldErrors(fieldErrorsFrom(result.data?.fields));
+            setFormError(validationText(result, "Не удалось создать пользователя"));
             return;
           }
           setDialog(null);
@@ -302,6 +329,7 @@ export function UsersManagement(): React.JSX.Element {
         user={dialog?.kind === "password" ? dialog.user : null}
         pending={pending}
         error={formError}
+        fieldErrors={fieldErrors}
         requestId={requestId}
         onClose={closeDialog}
         onSave={(password) => {
@@ -331,6 +359,7 @@ function CreateUserDialog({
   open,
   pending,
   error,
+  fieldErrors,
   requestId,
   onClose,
   onCreate,
@@ -338,6 +367,7 @@ function CreateUserDialog({
   open: boolean;
   pending: boolean;
   error: string | null;
+  fieldErrors: FieldErrors;
   requestId: string;
   onClose: () => void;
   onCreate: (payload: {
@@ -382,9 +412,16 @@ function CreateUserDialog({
           });
         }}
       >
-        <Field id={`${titleId}-username`} name="username" label="Логин" required maxLength={100} />
-        <Field id={`${titleId}-full_name`} name="full_name" label="ФИО" required maxLength={200} />
-        <Field id={`${titleId}-email`} name="email" label="Электронная почта" type="email" required />
+        <Field id={`${titleId}-username`} name="username" label="Логин" required maxLength={100} error={fieldErrors["username"]} />
+        <Field id={`${titleId}-full_name`} name="full_name" label="ФИО" required maxLength={200} error={fieldErrors["full_name"]} />
+        <Field id={`${titleId}-email`} name="email"
+          label="Электронная почта"
+          type="email"
+          required
+          pattern={EMAIL_PATTERN}
+          title="Адрес вида name@company.ru"
+          error={fieldErrors["email"]}
+        />
         <Field
           id={`${titleId}-password`}
           name="password"
@@ -392,6 +429,7 @@ function CreateUserDialog({
           type="password"
           required
           minLength={MIN_PASSWORD}
+          error={fieldErrors["password"]}
         />
         <p className="text-sm text-muted">Не короче {MIN_PASSWORD} символов.</p>
         <div>
@@ -484,6 +522,7 @@ function PasswordDialog({
   user,
   pending,
   error,
+  fieldErrors,
   requestId,
   onClose,
   onSave,
@@ -492,6 +531,7 @@ function PasswordDialog({
   user: UserRecord | null;
   pending: boolean;
   error: string | null;
+  fieldErrors: FieldErrors;
   requestId: string;
   onClose: () => void;
   onSave: (password: string) => void;
@@ -521,6 +561,7 @@ function PasswordDialog({
           type="password"
           required
           minLength={MIN_PASSWORD}
+          error={fieldErrors["password"]}
         />
         <p className="text-sm text-muted">Не короче {MIN_PASSWORD} символов. Причина не требуется.</p>
         <FormFooter
@@ -569,6 +610,9 @@ function Field({
   required = false,
   maxLength,
   minLength,
+  pattern,
+  title,
+  error,
 }: {
   id: string;
   name: string;
@@ -577,7 +621,11 @@ function Field({
   required?: boolean;
   maxLength?: number;
   minLength?: number;
+  pattern?: string;
+  title?: string;
+  error?: string | undefined;
 }): React.JSX.Element {
+  const errorId = `${id}-error`;
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
@@ -586,9 +634,18 @@ function Field({
         name={name}
         type={type}
         required={required}
+        aria-invalid={error === undefined ? undefined : true}
+        aria-describedby={error === undefined ? undefined : errorId}
         {...(maxLength === undefined ? {} : { maxLength })}
         {...(minLength === undefined ? {} : { minLength })}
+        {...(pattern === undefined ? {} : { pattern })}
+        {...(title === undefined ? {} : { title })}
       />
+      {error === undefined ? null : (
+        <p id={errorId} className="mt-1 text-sm text-danger" data-field-error={name}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

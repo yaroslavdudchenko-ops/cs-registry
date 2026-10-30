@@ -12,6 +12,7 @@ import {
   updateUser,
 } from "@/server/db/users-repository";
 import { ApiError } from "@/server/http/errors";
+import { userFieldErrors, userFieldMessage, userValidationError } from "@/server/modules/users/fields";
 import { assertReason, ReasonRequiredError } from "@/server/modules/audit/reason";
 import {
   appendAuditEventInTx,
@@ -73,10 +74,10 @@ export async function createUserRecord(
 ): Promise<Record<string, unknown>> {
   const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {
-    throw new ApiError("VALIDATION_ERROR");
+    throw userValidationError(userFieldErrors(parsed.error));
   }
   if (!isPasswordLongEnough(parsed.data.password)) {
-    throw new ApiError("VALIDATION_ERROR");
+    throw userValidationError([{ field: "password", message: userFieldMessage("password") }]);
   }
   const username = parsed.data.username.toLowerCase();
   const email = parsed.data.email.toLowerCase();
@@ -134,7 +135,7 @@ export async function updateUserRecord(
 ): Promise<Record<string, unknown>> {
   const parsed = patchUserSchema.safeParse(body);
   if (!parsed.success) {
-    throw new ApiError("VALIDATION_ERROR");
+    throw userValidationError(userFieldErrors(parsed.error));
   }
   const sql = getSql();
   const current = await selectUserById(sql, id);
@@ -154,7 +155,7 @@ export async function updateUserRecord(
   });
 
   if (passwordChange && parsed.data.password !== undefined && !isPasswordLongEnough(parsed.data.password)) {
-    throw new ApiError("VALIDATION_ERROR");
+    throw userValidationError([{ field: "password", message: userFieldMessage("password") }]);
   }
 
   try {
